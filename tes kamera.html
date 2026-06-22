@@ -1,0 +1,1150 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vision — AI Camera Translator</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --black: #0c0c0c;
+      --white: #f5f5f3;
+      --gray-100: #efefed;
+      --gray-200: #dddddb;
+      --gray-300: #b8b8b6;
+      --gray-500: #7a7a78;
+      --gray-700: #3d3d3b;
+      --gray-900: #1a1a18;
+    }
+
+    html {
+      font-size: 14px;
+    }
+
+    body {
+      background: var(--white);
+      color: var(--black);
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 400;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* TOP BAR */
+    .topbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 52px;
+      background: var(--white);
+      border-bottom: 1px solid var(--gray-200);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 28px;
+      z-index: 100;
+    }
+
+    .brand {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+    }
+
+    .brand-name {
+      font-family: 'Instrument Serif', serif;
+      font-size: 20px;
+      letter-spacing: -0.3px;
+    }
+
+    .brand-tag {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      color: var(--gray-500);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      border: 1px solid var(--gray-200);
+      padding: 2px 7px;
+      border-radius: 2px;
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .live-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      color: var(--gray-500);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .live-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--gray-300);
+      transition: background 0.3s;
+    }
+
+    .live-dot.on {
+      background: var(--black);
+      animation: blink 2s ease infinite;
+    }
+
+    @keyframes blink {
+
+      0%,
+      100% {
+        opacity: 1
+      }
+
+      50% {
+        opacity: 0.3
+      }
+    }
+
+    .proc-tag {
+      display: none;
+      align-items: center;
+      gap: 6px;
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      color: var(--black);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .proc-tag.on {
+      display: flex;
+    }
+
+    .spin {
+      width: 12px;
+      height: 12px;
+      border: 1.5px solid var(--gray-200);
+      border-top-color: var(--black);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* LAYOUT */
+    .shell {
+      padding-top: 52px;
+      display: grid;
+      grid-template-columns: 1fr 360px;
+      grid-template-rows: auto 1fr;
+      min-height: 100vh;
+    }
+
+    /* API ROW */
+    .api-row {
+      grid-column: 1 / -1;
+      border-bottom: 1px solid var(--gray-200);
+      padding: 12px 28px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .api-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      color: var(--gray-500);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      white-space: nowrap;
+    }
+
+    .api-input {
+      flex: 1;
+      min-width: 200px;
+      height: 34px;
+      background: transparent;
+      border: 1px solid var(--gray-200);
+      border-radius: 4px;
+      padding: 0 12px;
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      color: var(--black);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .api-input:focus {
+      border-color: var(--black);
+    }
+
+    .api-input::placeholder {
+      color: var(--gray-300);
+    }
+
+    .model-sel {
+      height: 34px;
+      min-width: 170px;
+      background: transparent;
+      border: 1px solid var(--gray-200);
+      border-radius: 4px;
+      padding: 0 10px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 12px;
+      color: var(--black);
+      outline: none;
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+
+    .model-sel:focus {
+      border-color: var(--black);
+    }
+
+    .btn-save {
+      height: 34px;
+      padding: 0 18px;
+      background: var(--black);
+      color: var(--white);
+      border: none;
+      border-radius: 4px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: opacity 0.15s;
+    }
+
+    .btn-save:hover {
+      opacity: 0.75;
+    }
+
+    /* CAMERA */
+    .camera-area {
+      border-right: 1px solid var(--gray-200);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .area-head {
+      padding: 14px 24px;
+      border-bottom: 1px solid var(--gray-200);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .area-title {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: var(--gray-500);
+    }
+
+    .auto-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      color: var(--gray-500);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .tog {
+      position: relative;
+      width: 32px;
+      height: 18px;
+    }
+
+    .tog input {
+      display: none;
+    }
+
+    .tog-track {
+      position: absolute;
+      inset: 0;
+      background: var(--gray-200);
+      border-radius: 18px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .tog-track::after {
+      content: '';
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      background: var(--white);
+      border-radius: 50%;
+      top: 3px;
+      left: 3px;
+      transition: transform 0.2s;
+    }
+
+    .tog input:checked+.tog-track {
+      background: var(--black);
+    }
+
+    .tog input:checked+.tog-track::after {
+      transform: translateX(14px);
+    }
+
+    .cam-view {
+      position: relative;
+      flex: 1;
+      background: var(--gray-100);
+      overflow: hidden;
+      min-height: 340px;
+    }
+
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    canvas {
+      display: none;
+    }
+
+    .cam-empty {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    .cam-empty-ring {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      border: 1.5px solid var(--gray-300);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      color: var(--gray-300);
+    }
+
+    .cam-empty p {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: var(--gray-300);
+      letter-spacing: 0.3px;
+      text-align: center;
+      line-height: 1.7;
+    }
+
+    /* Scan overlay */
+    .scan-ov {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .scan-ov.on {
+      opacity: 1;
+    }
+
+    .scan-line {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: var(--black);
+      animation: scanMove 1.8s ease-in-out infinite;
+    }
+
+    @keyframes scanMove {
+      0% {
+        top: 0;
+        opacity: 0
+      }
+
+      10% {
+        opacity: 1
+      }
+
+      90% {
+        opacity: 1
+      }
+
+      100% {
+        top: 100%;
+        opacity: 0
+      }
+    }
+
+    .sc {
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      border-color: var(--black);
+      border-style: solid;
+    }
+
+    .sc.tl {
+      top: 14px;
+      left: 14px;
+      border-width: 1.5px 0 0 1.5px;
+    }
+
+    .sc.tr {
+      top: 14px;
+      right: 14px;
+      border-width: 1.5px 1.5px 0 0;
+    }
+
+    .sc.bl {
+      bottom: 14px;
+      left: 14px;
+      border-width: 0 0 1.5px 1.5px;
+    }
+
+    .sc.br {
+      bottom: 14px;
+      right: 14px;
+      border-width: 0 1.5px 1.5px 0;
+    }
+
+    /* Translation float */
+    .trans-float {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(12, 12, 12, 0.9);
+      padding: 16px 20px 18px;
+      transform: translateY(100%);
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .trans-float.show {
+      transform: translateY(0);
+    }
+
+    .trans-lbl {
+      font-family: 'DM Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 1.5px;
+      color: var(--gray-300);
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .trans-text {
+      font-family: 'Instrument Serif', serif;
+      font-style: italic;
+      font-size: 17px;
+      color: var(--white);
+      line-height: 1.45;
+    }
+
+    /* Camera controls */
+    .cam-ctrl {
+      padding: 14px 24px;
+      border-top: 1px solid var(--gray-200);
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn {
+      flex: 1;
+      height: 36px;
+      border-radius: 4px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+      border: 1px solid transparent;
+    }
+
+    .btn-blk {
+      background: var(--black);
+      color: var(--white);
+      border-color: var(--black);
+    }
+
+    .btn-blk:hover:not(:disabled) {
+      background: var(--gray-900);
+    }
+
+    .btn-out {
+      background: transparent;
+      color: var(--black);
+      border-color: var(--gray-200);
+    }
+
+    .btn-out:hover:not(:disabled) {
+      border-color: var(--black);
+    }
+
+    .btn-gst {
+      background: transparent;
+      color: var(--gray-500);
+      border-color: var(--gray-200);
+    }
+
+    .btn-gst:hover:not(:disabled) {
+      color: var(--black);
+      border-color: var(--gray-500);
+    }
+
+    .btn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    /* RIGHT PANEL */
+    .right-panel {
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 52px - 57px);
+      position: sticky;
+      top: calc(52px + 57px);
+    }
+
+    .hist-sec {
+      border-bottom: 1px solid var(--gray-200);
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .sec-head {
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--gray-200);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .sec-title {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: var(--gray-500);
+    }
+
+    .btn-xs {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      color: var(--gray-300);
+      background: none;
+      border: none;
+      cursor: pointer;
+      letter-spacing: 0.3px;
+      transition: color 0.15s;
+    }
+
+    .btn-xs:hover {
+      color: var(--black);
+    }
+
+    .hist-scroll {
+      overflow-y: auto;
+      flex: 1;
+      padding: 10px 0;
+    }
+
+    .hist-scroll::-webkit-scrollbar {
+      width: 3px;
+    }
+
+    .hist-scroll::-webkit-scrollbar-thumb {
+      background: var(--gray-200);
+    }
+
+    .empty-note {
+      padding: 28px 20px;
+      text-align: center;
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: var(--gray-300);
+      line-height: 1.8;
+      letter-spacing: 0.3px;
+    }
+
+    .hist-item {
+      padding: 11px 20px;
+      border-bottom: 1px solid var(--gray-100);
+      animation: fadeUp 0.2s ease;
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(4px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    .hi-meta {
+      font-family: 'DM Mono', monospace;
+      font-size: 9px;
+      color: var(--gray-300);
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+
+    .hi-trans {
+      font-family: 'Instrument Serif', serif;
+      font-size: 15px;
+      color: var(--black);
+      line-height: 1.4;
+      margin-bottom: 2px;
+    }
+
+    .hi-desc {
+      font-size: 11px;
+      color: var(--gray-500);
+      line-height: 1.5;
+    }
+
+    /* CHAT */
+    .chat-sec {
+      display: flex;
+      flex-direction: column;
+      flex: 1.2;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .chat-msgs {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .chat-msgs::-webkit-scrollbar {
+      width: 3px;
+    }
+
+    .chat-msgs::-webkit-scrollbar-thumb {
+      background: var(--gray-200);
+    }
+
+    .msg {
+      max-width: 90%;
+      font-size: 13px;
+      line-height: 1.55;
+      animation: fadeUp 0.2s ease;
+    }
+
+    .msg-lbl {
+      font-family: 'DM Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+      color: var(--gray-300);
+    }
+
+    .msg.user {
+      align-self: flex-end;
+      text-align: right;
+    }
+
+    .msg.user .msg-lbl {
+      text-align: right;
+    }
+
+    .bubble {
+      padding: 9px 13px;
+      border-radius: 4px;
+      display: inline-block;
+      text-align: left;
+    }
+
+    .msg.user .bubble {
+      background: var(--black);
+      color: var(--white);
+      border-radius: 4px 0 4px 4px;
+    }
+
+    .msg.ai .bubble {
+      background: var(--gray-100);
+      color: var(--black);
+      border-radius: 0 4px 4px 4px;
+    }
+
+    .msg.ai.typing .bubble {
+      color: var(--gray-500);
+    }
+
+    .chat-inp-row {
+      padding: 12px 16px;
+      border-top: 1px solid var(--gray-200);
+      display: flex;
+      gap: 8px;
+      align-items: flex-end;
+      flex-shrink: 0;
+    }
+
+    .chat-ta {
+      flex: 1;
+      background: var(--gray-100);
+      border: 1px solid transparent;
+      border-radius: 4px;
+      padding: 9px 12px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      color: var(--black);
+      outline: none;
+      resize: none;
+      min-height: 36px;
+      max-height: 90px;
+      transition: border-color 0.15s;
+      line-height: 1.4;
+    }
+
+    .chat-ta:focus {
+      border-color: var(--gray-300);
+      background: var(--white);
+    }
+
+    .chat-ta::placeholder {
+      color: var(--gray-300);
+    }
+
+    .send-btn {
+      width: 36px;
+      height: 36px;
+      background: var(--black);
+      color: var(--white);
+      border: none;
+      border-radius: 4px;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: opacity 0.15s;
+    }
+
+    .send-btn:hover:not(:disabled) {
+      opacity: 0.7;
+    }
+
+    .send-btn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    /* TOAST */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(6px);
+      background: var(--black);
+      color: var(--white);
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.3px;
+      padding: 9px 18px;
+      border-radius: 4px;
+      opacity: 0;
+      transition: all 0.22s;
+      pointer-events: none;
+      white-space: nowrap;
+      z-index: 999;
+    }
+
+    .toast.on {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    @media (max-width: 860px) {
+      .shell {
+        grid-template-columns: 1fr;
+      }
+
+      .camera-area {
+        border-right: none;
+        border-bottom: 1px solid var(--gray-200);
+      }
+
+      .right-panel {
+        height: auto;
+        position: static;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="topbar">
+    <div class="brand">
+      <span class="brand-name">Vision</span>
+      <span class="brand-tag">AI Translator</span>
+    </div>
+    <div class="topbar-right">
+      <div class="proc-tag" id="procTag">
+        <div class="spin"></div><span>Processing</span>
+      </div>
+      <div class="live-pill">
+        <div class="live-dot" id="liveDot"></div><span id="liveText">Offline</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="shell">
+
+    <div class="api-row">
+      <span class="api-label">Key</span>
+      <input type="text" class="api-input" id="apiKey" placeholder="sk-ant-... atau sk-or-..." />
+      <span class="api-label">Model</span>
+      <select class="model-sel" id="modelSel">
+        <option value="auto">Auto</option>
+        <option value="google/gemini-2.5-flash">Gemini 2.5 Flash</option>
+        <option value="google/gemini-2.5-pro">Gemini 2.5 Pro</option>
+        <option value="anthropic/claude-3.5-sonnet">Claude 3.5 Sonnet</option>
+        <option value="meta-llama/llama-3.2-11b-vision-instruct">Llama 3.2 Vision</option>
+      </select>
+      <button class="btn-save" onclick="saveKey()">Simpan</button>
+    </div>
+
+    <div class="camera-area">
+      <div class="area-head">
+        <span class="area-title">Live Camera</span>
+        <div class="auto-row">
+          <span>Auto 5s</span>
+          <label class="tog">
+            <input type="checkbox" id="autoTog" onchange="toggleAuto()" />
+            <div class="tog-track"></div>
+          </label>
+        </div>
+      </div>
+
+      <div class="cam-view">
+        <video id="video" autoplay muted playsinline></video>
+        <canvas id="canvas"></canvas>
+
+        <div class="cam-empty" id="camEmpty">
+          <div class="cam-empty-ring">◎</div>
+          <p>Kamera belum aktif<br>Klik tombol di bawah</p>
+        </div>
+
+        <div class="scan-ov" id="scanOv">
+          <div class="scan-line"></div>
+          <div class="sc tl"></div>
+          <div class="sc tr"></div>
+          <div class="sc bl"></div>
+          <div class="sc br"></div>
+        </div>
+
+        <div class="trans-float" id="transFloat">
+          <div class="trans-lbl">Translation · EN</div>
+          <div class="trans-text" id="transText"></div>
+        </div>
+      </div>
+
+      <div class="cam-ctrl">
+        <button class="btn btn-blk" id="startBtn" onclick="startCam()">Buka Kamera</button>
+        <button class="btn btn-out" id="scanBtn" onclick="scanNow()" disabled>Scan</button>
+        <button class="btn btn-gst" id="stopBtn" onclick="stopCam()" disabled>Stop</button>
+      </div>
+    </div>
+
+    <div class="right-panel">
+      <div class="hist-sec">
+        <div class="sec-head">
+          <span class="sec-title">Hasil Translate</span>
+          <button class="btn-xs" onclick="clearHist()">Hapus</button>
+        </div>
+        <div class="hist-scroll" id="histList">
+          <div class="empty-note">Belum ada terjemahan.<br>Scan untuk mulai.</div>
+        </div>
+      </div>
+
+      <div class="chat-sec">
+        <div class="sec-head">
+          <span class="sec-title">Tanya AI</span>
+          <span
+            style="font-family:'DM Mono',monospace;font-size:9px;color:var(--gray-300);letter-spacing:0.3px;">tentang
+            kamera</span>
+        </div>
+        <div class="chat-msgs" id="chatMsgs">
+          <div class="msg ai">
+            <div class="msg-lbl">AI</div>
+            <div class="bubble">Halo! Buka kamera dan tanya aku apa saja tentang yang terlihat.</div>
+          </div>
+        </div>
+        <div class="chat-inp-row">
+          <textarea class="chat-ta" id="chatInp" placeholder="Tanya sesuatu..." rows="1"
+            onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat()}"
+            oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
+          <button class="send-btn" id="sendBtn" onclick="sendChat()">↑</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    let stream = null, autoInterval = null, lastFrame = null, apiKey = '', busy = false;
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+
+    window.onload = () => {
+      const k = localStorage.getItem('vis_key');
+      const m = localStorage.getItem('vis_model') || 'auto';
+      const defaultKey = 'YOUR_API_KEY_HERE';
+      
+      // Jika key kosong atau masih menggunakan key lama yang sudah tidak aktif, otomatis perbarui ke yang baru
+      if (!k || k === 'OLD_API_KEY_HERE') {
+        document.getElementById('apiKey').value = defaultKey;
+        apiKey = defaultKey;
+        localStorage.setItem('vis_key', defaultKey);
+        setStatus(true, 'Ready (Bawaan)');
+      } else {
+        document.getElementById('apiKey').value = k;
+        apiKey = k;
+        setStatus(true, 'Ready');
+      }
+      document.getElementById('modelSel').value = m;
+    };
+
+    function saveKey() {
+      apiKey = document.getElementById('apiKey').value.trim();
+      const m = document.getElementById('modelSel').value;
+      if (!apiKey) return toast('Masukkan API key dulu');
+      localStorage.setItem('vis_key', apiKey);
+      localStorage.setItem('vis_model', m);
+      setStatus(true, 'Ready'); toast('Tersimpan');
+    }
+
+    function getModel() {
+      const v = document.getElementById('modelSel').value;
+      if (v !== 'auto') return v;
+      return apiKey.startsWith('sk-or-') ? 'google/gemini-2.5-flash' : 'claude-sonnet-4-20250514';
+    }
+
+    function setStatus(on, text) {
+      document.getElementById('liveDot').className = 'live-dot' + (on ? ' on' : '');
+      document.getElementById('liveText').textContent = text;
+    }
+
+    function setBusy(b) {
+      busy = b;
+      document.getElementById('procTag').className = 'proc-tag' + (b ? ' on' : '');
+    }
+
+    async function startCam() {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+        video.srcObject = stream;
+        document.getElementById('camEmpty').style.display = 'none';
+        document.getElementById('startBtn').disabled = true;
+        document.getElementById('scanBtn').disabled = false;
+        document.getElementById('stopBtn').disabled = false;
+        setStatus(true, 'Kamera aktif'); capture();
+      } catch (e) { toast('Gagal: ' + e.message); }
+    }
+
+    function stopCam() {
+      stream?.getTracks().forEach(t => t.stop()); stream = null;
+      video.srcObject = null;
+      clearInterval(autoInterval); autoInterval = null;
+      document.getElementById('autoTog').checked = false;
+      document.getElementById('camEmpty').style.display = 'flex';
+      document.getElementById('startBtn').disabled = false;
+      document.getElementById('scanBtn').disabled = true;
+      document.getElementById('stopBtn').disabled = true;
+      document.getElementById('scanOv').classList.remove('on');
+      setStatus(false, 'Offline');
+    }
+
+    function capture() {
+      if (!stream) return null;
+      canvas.width = video.videoWidth || 640; canvas.height = video.videoHeight || 480;
+      ctx.drawImage(video, 0, 0);
+      lastFrame = canvas.toDataURL('image/jpeg', 0.75).split(',')[1];
+      return lastFrame;
+    }
+
+    async function scanNow() {
+      if (!apiKey) return toast('Masukkan API key dulu');
+      if (!stream) return toast('Buka kamera dulu');
+      if (busy) return;
+      const frame = capture(); if (!frame) return;
+      document.getElementById('scanOv').classList.add('on');
+      setBusy(true);
+      try {
+        const res = await callAPI(frame, `Analyze this image, respond ONLY in JSON (no markdown):
+{"hasText":true/false,"translation":"English translation of visible text, or empty if none","description":"Deskripsi singkat dalam bahasa Indonesia, max 40 kata","detectedLanguage":"language name or none"}`);
+        let r;
+        let cleanRes = res.trim();
+        const start = cleanRes.indexOf('{');
+        const end = cleanRes.lastIndexOf('}');
+        if (start !== -1 && end !== -1) {
+          cleanRes = cleanRes.substring(start, end + 1);
+        }
+        try { r = JSON.parse(cleanRes); }
+        catch { r = { hasText: false, translation: '', description: res, detectedLanguage: 'none' }; }
+        addHist(r);
+        if (r.translation) {
+          document.getElementById('transText').textContent = r.translation;
+          document.getElementById('transFloat').classList.add('show');
+          setTimeout(() => document.getElementById('transFloat').classList.remove('show'), 5000);
+        }
+      } catch (e) { addChat('ai', '❌ ' + e.message); }
+      finally { document.getElementById('scanOv').classList.remove('on'); setBusy(false); }
+    }
+
+    async function callAPI(frame, prompt) {
+      const model = getModel();
+      const isOR = apiKey.startsWith('sk-or-');
+      if (isOR) {
+        const content = [{ type: 'text', text: prompt }];
+        if (frame) content.push({ type: 'image_url', image_url: { url: `data:image/jpeg;base64,${frame}` } });
+        const r = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}`, 'HTTP-Referer': location.href, 'X-Title': 'Vision AI' },
+          body: JSON.stringify({ model, max_tokens: 1000, messages: [{ role: 'user', content }] })
+        });
+        const d = await r.json().catch(() => ({}));
+        if (!r.ok) {
+          throw new Error(d.error?.message || d.error || `HTTP Error ${r.status}`);
+        }
+        if (d.error) throw new Error(d.error.message || d.error);
+        return d.choices?.[0]?.message?.content || '';
+      } else {
+        const content = [];
+        if (frame) content.push({ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: frame } });
+        content.push({ type: 'text', text: prompt });
+        const r = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
+          body: JSON.stringify({ model, max_tokens: 1000, messages: [{ role: 'user', content }] })
+        });
+        const d = await r.json().catch(() => ({}));
+        if (!r.ok) {
+          throw new Error(d.error?.message || d.error || `HTTP Error ${r.status}`);
+        }
+        if (d.error) throw new Error(d.error.message || d.error);
+        return d.content?.[0]?.text || '';
+      }
+    }
+
+    function addHist(r) {
+      const list = document.getElementById('histList');
+      const empty = list.querySelector('.empty-note');
+      if (empty) empty.remove();
+      const t = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+      const lang = (r.detectedLanguage && r.detectedLanguage !== 'none') ? ' · ' + r.detectedLanguage : '';
+      const el = document.createElement('div');
+      el.className = 'hist-item';
+      el.innerHTML = `<div class="hi-meta">${t}${lang}</div>
+<div class="hi-trans">${r.translation || (r.hasText ? 'Teks terdeteksi' : 'Tidak ada teks')}</div>
+${r.description ? `<div class="hi-desc">${r.description}</div>` : ''}`;
+      list.insertBefore(el, list.firstChild);
+    }
+
+    function clearHist() {
+      document.getElementById('histList').innerHTML = '<div class="empty-note">Belum ada terjemahan.<br>Scan untuk mulai.</div>';
+    }
+
+    function toggleAuto() {
+      const on = document.getElementById('autoTog').checked;
+      if (on) {
+        if (!stream) { document.getElementById('autoTog').checked = false; return toast('Buka kamera dulu'); }
+        autoInterval = setInterval(scanNow, 5000); toast('Auto-scan aktif');
+      } else {
+        clearInterval(autoInterval); autoInterval = null; toast('Auto-scan off');
+      }
+    }
+
+    async function sendChat() {
+      const inp = document.getElementById('chatInp');
+      const q = inp.value.trim();
+      if (!q || busy) return;
+      if (!apiKey) return toast('Masukkan API key dulu');
+      inp.value = ''; inp.style.height = 'auto';
+      addChat('user', q); setBusy(true);
+      document.getElementById('sendBtn').disabled = true;
+      const frame = capture();
+      const typing = document.createElement('div');
+      typing.className = 'msg ai typing'; typing.id = 'typing';
+      typing.innerHTML = '<div class="msg-lbl">AI</div><div class="bubble">...</div>';
+      document.getElementById('chatMsgs').appendChild(typing); scrollChat();
+      try {
+        const prompt = `${frame ? 'Ini gambar dari kamera saat ini. ' : ''}Pengguna bertanya: ${q}\n\nJawab dalam bahasa Indonesia, singkat dan informatif.`;
+        const reply = await callAPI(frame, prompt);
+        document.getElementById('typing')?.remove();
+        addChat('ai', reply);
+      } catch (e) {
+        document.getElementById('typing')?.remove();
+        addChat('ai', '❌ ' + e.message);
+      } finally { setBusy(false); document.getElementById('sendBtn').disabled = false; }
+    }
+
+    function addChat(role, text) {
+      const c = document.getElementById('chatMsgs');
+      const d = document.createElement('div');
+      d.className = `msg ${role}`;
+      d.innerHTML = `<div class="msg-lbl">${role === 'user' ? 'Kamu' : 'AI'}</div><div class="bubble">${text}</div>`;
+      c.appendChild(d); scrollChat();
+    }
+
+    function scrollChat() { const c = document.getElementById('chatMsgs'); c.scrollTop = c.scrollHeight; }
+
+    function toast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg; t.classList.add('on');
+      setTimeout(() => t.classList.remove('on'), 2200);
+    }
+  </script>
+</body>
+
+</html>
